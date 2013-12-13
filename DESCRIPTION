@@ -1,0 +1,16 @@
+Package: flowMatch
+Type: Package
+Title: Matching and meta-clustering in flow cytometry
+Version: 0.99.1
+Date: 2013-08-01
+Author: Ariful Azad
+Maintainer: Ariful Azad <aazad@purdue.edu>
+Description: Matching cell populations and building meta-clusters and templates from a collection of FC samples.
+License: Artistic-2.0
+LazyLoad: yes
+Depends: R (>= 2.15.1), Rcpp (>= 0.10.1), methods, flowCore
+LinkingTo: Rcpp
+Imports: Biobase
+Suggests: healthyFlowData
+biocViews: Bioinformatics, FlowCytometry, Clustering, FlowCytData
+RcppModules: flowMatch_module

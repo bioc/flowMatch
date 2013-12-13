@@ -1,0 +1,59 @@
+useDynLib(flowMatch)
+#exportPattern("^[[:alpha:]]+")
+
+import(Biobase)
+import(flowCore)
+import(methods)
+import(Rcpp)
+
+
+exportClasses(
+  "Cluster",
+  "ClusteredSample",
+  "ClusterMatch",
+  "MetaCluster",
+  "Template"
+)
+
+
+
+#only generic functions go here
+exportMethods(
+  "plot",
+  "summary",
+  "get.size",
+  "get.dimension",
+  "get.center",
+  "get.cov",
+  "get.cluster.id",
+  "get.sample.id",
+  "get.num.clusters",
+  "get.clusters",
+  "get.labels",
+  "get.num.metaclusters",
+  "get.template.id",
+  "get.metaClusters",
+  "get.tree", 
+  "get.match12",
+  "get.match21",
+  "get.matching.cost",
+  "get.unmatch.penalty",
+  "sample.id<-"
+)
+
+export(
+  "Cluster",
+  "ClusteredSample",
+  "mahalanobis.dist",
+  "symmetric.KL",
+  "dist.cluster",
+  "dist.matrix",
+  "dist.sample",
+  "dist.template",
+  "match.clusters",
+  "match.clusters.dist",
+  "create.template",
+  "template.tree",
+  "MetaCluster",
+  "Template"
+)

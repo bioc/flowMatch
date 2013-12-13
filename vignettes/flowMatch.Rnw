@@ -1,0 +1,434 @@
+%\VignetteIndexEntry{flowMatch: Cell population matching and meta-clustering in Flow Cytometry}
+%\VignetteDepends{flowMatch}
+%\VignetteKeywords{Matching, metaclustering}
+%\VignettePackage{flowMatch}
+
+\documentclass{article}
+\usepackage{cite, hyperref, booktabs, graphicx}
+\newcommand{\Rpackage}[1]{{\texttt{#1}}}
+
+\title{flowMatch: Cell population matching and meta-clustering in Flow Cytometry}
+\author{Ariful Azad, Alex Pothen}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\setkeys{Gin}{width=1.0\textwidth, height=1.1\textwidth}
+
+\maketitle
+\begin{center}
+{\tt aazad@purdue.edu}
+\end{center}
+
+\textnormal{\normalfont}
+
+\tableofcontents
+\newpage
+
+
+\section{Licensing}
+
+Under the Artistic License, you are free to use and redistribute this software for academic and personal use. 
+%\begin{itemize}
+%\item[] Insert paper citation.
+%\end{itemize}
+
+\section{Overview}
+The \emph{flowMatch} package performs two major functions given a collection of flow cytometry (FC) samples:
+\begin{enumerate}
+\item Match cell populations across FC samples
+\item Compute meta-clusters and templates from a collection of FC samples
+\end{enumerate}
+
+\subsection{FC sample}
+A flow cytometry sample measuring $p$  features for $n$ cells is represented with an $n\times p$ matrix $A$.
+The ($i,j$) entry of the matrix, $A(i,j)$, represents the measurement of the $j^{th}$ feature in the $i^{th}$ cell.
+We characterize a multi-parametric sample with a finite mixture model of multivariate normal distributions, where each component is a cluster of cells expressing similar phenotypes in the measured parameter space.
+Such a cluster of cells represents a particular cell type and is called a \emph{cell population} in cytometry. 
+In the mixture model, a cell population (cluster) is characterized by a multi-dimensional normal distribution and is represented by two parameters $\mu$, the $p$ dimensional mean vector, and $\Sigma$, the $p\times p$ covariance matrix \cite{ lo2008automated}.
+
+\subsection{Population matching}
+Registering cell populations and tracking their changes across samples often reveal the biological conditions the samples are subjected to. 
+To study these cross-condition changes we first establish the correspondence among cell populations by matching clusters across FC samples. 
+We used a robust variant of matching algorithm called the mixed edge cover (MEC) algorithm that allows cell cluster from one sample to get matched to zero or more clusters in another sample \cite{azad2010identifying}. 
+MEC algorithm covers possible circumstances when a cell population in one sample is absent from another sample, or when a cell population in one sample splits into two or more cell populations in a second sample, which can happen due to biological reasons or due to the limitations of clustering methods.
+
+
+\subsection{Meta-clustering and construction of templates}
+In high throughput flow cytometry, large cohorts of samples belonging to some representative classes are produced.
+Different classes usually represent multiple experiment conditions, disease status, time points etc.
+In this setting,  samples belonging to same class can be summarized  by a \emph{template}, which is a summary of the sample's  expression pattern \cite{azad2012matching, finak2010optimizing, pyne2009automated}. 
+The concept of cell populations in a sample can be extended to \emph{meta-clusters}  in a collection of similar samples, representing generic cell populations that appear in each sample with some sample-specific variation. 
+Each meta-cluster is  formed by combining cell populations expressing similar phenotypes in different samples.
+Hence mathematically a meta-cluster is characterized by a normal distribution, with  parameters computed from the distributions of the clusters included in it.
+Clusters in a meta-cluster represent the same type of cells and thus have overlapping distributions in the  marker space.
+ 
+A  \emph{template} is a collection of relatively homogeneous meta-clusters commonly shared across samples of a given class, thus describing the key immune-phenotypes of an overall class of samples in a formal,  yet robust,  manner. 
+Mathematically a template is characterized by a finite mixture of normal distributions. 
+We summarize these concepts in Table \ref{tab:terminology} and in Figure \ref{fig:template_concepts}. 
+Given the inter-sample variations, a few templates can together concisely represent a large cohort of samples by emphasizing all the major characteristics while hiding unnecessary details. 
+Thereby, overall changes across multiple conditions can be determined rigorously by comparing just the cleaner class templates rather than the noisy samples themselves \cite{azad2012matching, pyne2009automated}.
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[keepaspectratio=true, scale=.5]{template_concepts.pdf} % requires the graphicx package
+   \caption{Summary of terminology used in this package. } 
+   \label{fig:template_concepts}
+\end{figure}
+
+\begin{table}[htbp]
+   \centering
+   %\topcaption{Table captions are better up top} % requires the topcapt package
+   \begin{tabular}{p{0.28\linewidth} p{0.62\linewidth}} % Column formatting, @{} suppresses leading/trailing space
+      \toprule
+      Terms    & meaning \\
+     \toprule
+      Cell population (cluster)      & a group of cells expressing similar features, e.g., helper T cells, B cells \\
+            \midrule
+      Sample       & a collection of cell populations within a single biological sample \\
+            \midrule
+      Meta-cluster       & a set of biologically similar cell clusters from different samples   \\
+            \midrule
+      Template & a collection of meta-clusters from samples of same class  \\
+      \bottomrule
+   \end{tabular}
+   \caption{Summary of terminology used in this package.}
+   \label{tab:terminology}
+\end{table}
+
+We build templates from a collection of samples by a hierarchical algorithm that repeatedly merges the most similar pair of samples or partial templates obtained by the algorithm thus far. 
+The algorithm builds a binary tree called the \emph{template tree} denoting the hierarchical relationships among the samples.  
+A leaf node of the template tree represents a sample and an internal (non-leaf) node represents a template created from the samples.  
+Fig.~\ref{fig:template_tree} shows an example of a template tree created from four hypothetical samples, $S_1, S_2, S_3$, and $S_4$.
+An internal node in the template tree is created by matching similar cell clusters 
+%with the MEC algorithm 
+across the two children and merging the matched clusters into meta-clusters. 
+For example, the internal node $T(S_1,S_2)$ in Fig.~\ref{fig:template_tree} denotes the template from samples $S_1$ and $S_2$.
+The mean vector and covariance matrix of a meta-cluster are computed from the means and covariance matrices of the clusters participating in the meta-cluster.
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[keepaspectratio=true, scale=.3]{template_example.pdf} % requires the graphicx package
+   \caption{An example of a hierarchical template tree created from four hypothetical samples $S_1, S_2, S_3$ and $S_4$. A leaf node of the template tree represents a sample and an internal node represents a template created from its children.} 
+%The children could be  templates if they are interior nodes, or samples if they are leaves. }
+   \label{fig:template_tree}
+\end{figure}
+
+\subsection{Related packages in Bioconductor}
+Several packages are available in Bioconductor (http://www.bioconductor.org/) for analyzing flow cytometry data.
+The \Rpackage{flowCore} package provides basic structures for flow cytometry data.
+A number of packages are available for clustering or automated gating in a FC samples such as \Rpackage{flowClust}/\Rpackage{flowMerge} and \Rpackage{flowMeans}.
+Given an FC samples these packages identify cell populations (cell clusters) in the sample.
+
+The \Rpackage{flowMatch} package starts working with the output of clustering/gating results.
+Given a pair of FC sample, \Rpackage{flowMatch} registers corresponding populations across the sample pair by using a combinatorial algorithm called the mixed edge cover~\cite{azad2010identifying}.
+In addition to registering populations, the \Rpackage{flowMatch} package merges corresponding clusters across samples to build meta-clusters.
+A meta-cluster represents the core pattern of a particular cell population across a large collection of samples.
+The collection of meta-clusters are then grouped together to build templates for a collection of similar samples.
+Thus, the \Rpackage{flowMatch} package works in a higher level than the other packages such as \Rpackage{flowClust}/\Rpackage{flowMerge}, \Rpackage{flowMeans}, \Rpackage{flowQ}, \Rpackage{flowTrans}, etc.
+
+
+The only package related to this package is  \Rpackage{flowMap} that also matches cell population across samples.
+However, \Rpackage{flowMap} uses the nonparametric Friedman-Rafsky (FR) multivariate run test to compute the mapping of clusters.
+By contrast, \Rpackage{flowMatch} uses Mahalanobis distance or Kullback-Leibler divergence to compute cluster dissimilarity and then applies a combinatorial algorithm to match clusters. 
+Additionally, \Rpackage{flowMatch} performs meta-clustering and creates templates, which are not performed by \Rpackage{flowMap}.
+\Rpackage{FLAME} (not a Bioconductor package) by Pyne et al. provides funtionalities  similar to \Rpackage{flowMatch}.
+The differences between these two approaches are discussed in~\cite{azad2012matching}.
+
+
+\subsection{Dataset for testing}
+
+In order to reduce the download size of \Rpackage{flowMatch}, I put an example dataset to a Bioconductor data package (\Rpackage{healthyFlowData}).
+The data package contains a dataset consisting of 20 FC samples where peripheral blood mononuclear cells (PBMC) were collected from four healthy individuals. 
+Each sample was divided into five repplicates and each replicate was stained using labeled antibodies against CD45, CD3, CD4, CD8, and CD19 protein markers.
+Therefore we have total 20 samples from four healthy subjects.
+This is a part of a larger dataset of 65 samples.
+
+
+The \Rpackage{healthyFlowData} package can be downloaded in the usual way.
+
+<<CompanionPkg, eval=FALSE>>=
+
+source("http://www.bioconductor.org/biocLite.R")
+biocLite("healthyFlowData")
+@
+
+To use the examples included in this package, we must load the \Rpackage{flowMatch} and \Rpackage{healthyFlowData} packages:
+
+
+<<echo=true,results=hide>>=
+library(healthyFlowData)
+library(flowMatch)
+@
+
+
+\section{Data structures}
+We summarized the concept of cluster, sample, meta-cluster and template in Table \ref{tab:terminology} and in Figure \ref{fig:template_concepts}. 
+In this package we represent these terms with four S4 classes.
+Additionally we represent matching of clusters across a pair of sample with another S4 class.
+We describe the classes in Table \ref{tab:S4classes}.
+Details about this classes will be discussed in their related sections.
+\begin{table}[htbp]
+   \centering
+   %\topcaption{Table captions are better up top} % requires the topcapt package
+   \begin{tabular}{p{0.4\linewidth} p{0.4\linewidth}} % Column formatting, @{} suppresses leading/trailing space
+      \toprule
+      Terms   & S4 class \\
+     \toprule
+      Cell population (cluster)      & \emph{Cluster} \\
+            \midrule
+      Sample       & \emph{ClusteredSample} \\
+            \midrule
+      Cluster matching       & \emph{ClusterMatch} \\
+            \midrule
+      Meta-cluster       & \emph{MetaCluster}   \\
+            \midrule
+      Template & \emph{Template}  \\
+      \bottomrule
+   \end{tabular}
+   \caption{S4 classes used in this package.}
+   \label{tab:S4classes}
+\end{table}
+
+\section{Population identification by using clustering algorithms}
+Since \emph{flowMatch} package can work with any clustering algorithm, we did not include any clustering algorithm in this package.
+
+We first identify cell populations in each sample by using any suitable clustering algorithm.
+We then create an object of class \emph{ClusteredSample} to encapsulate all necessary information about cell populations in a sample.
+An object of class \emph{ClusteredSample} stores a list of clusters (objects of class \emph{Cluster}) and other necessary parameters.
+Since we characterize a sample with a finite mixture of normal distribution, the user can supply {\tt centers} or {\tt cov} of the clusters estimated by methods of their choice. 
+When {\tt centers} or {\tt cov} of the clusters are not provided by user, they are estimated from the FC sample. 
+The center of a cluster is estimated with the mean of points present in the cluster. 
+An unbiased estimator of covariance is estimated using function {\tt cov} from {\tt stats} package.
+
+
+
+<<clustering, echo=TRUE, fig=TRUE>>=
+## ------------------------------------------------
+## load data and retrieve a sample
+## ------------------------------------------------
+
+data(hd)
+sample = exprs(hd.flowSet[[1]])
+
+## ------------------------------------------------
+## cluster sample using kmeans algorithm
+## ------------------------------------------------
+km = kmeans(sample, centers=4, nstart=20)
+cluster.labels = km$cluster
+
+## ------------------------------------------------
+## Create ClusteredSample object  (Option 1 )
+## without specifying centers and covs
+## we need to pass FC sample for paramter estimation
+## ------------------------------------------------
+
+clustSample = ClusteredSample(labels=cluster.labels, sample=sample)
+
+## ------------------------------------------------
+## Create ClusteredSample object  (Option 2)
+## specifying centers and covs 
+## no need to pass the sample
+## ------------------------------------------------
+
+centers = list()
+covs = list()
+num.clusters = nrow(km$centers)
+for(i in 1:num.clusters)
+{
+  centers[[i]] = km$centers[i,]
+  covs[[i]] = cov(sample[cluster.labels==i,])
+}
+# Now we do not need to pass sample
+clustSample = ClusteredSample(labels=cluster.labels, centers=centers, covs=covs)
+
+## ------------------------------------------------
+## Show summary and plot a clustered sample
+## ------------------------------------------------
+
+summary(clustSample)
+plot(sample, clustSample)
+
+@ 
+
+
+
+\section{Computing distance between clusters}
+The mixed edge cover algorithm matches similar clusters based on a dissimilarity measure between a pair of clusters.
+In \emph{flowMatch} package we included Euclidean distance, Mahalanobis distance and KL divergence for computing the dissimilarities.
+These distances are computed from a pair of \emph{Cluster} objects by using their distribution parameters.
+
+
+<<stage2, echo=TRUE>>=
+## ------------------------------------------------
+## load data and retrieve a sample
+## ------------------------------------------------
+
+data(hd)
+sample = exprs(hd.flowSet[[1]])
+
+## ------------------------------------------------
+## cluster sample using kmeans algorithm
+## ------------------------------------------------
+
+km = kmeans(sample, centers=4, nstart=20)
+cluster.labels = km$cluster
+
+## ------------------------------------------------
+## Create ClusteredSample object  
+## and retrieve two clusters (cluster from different samples can be used as well)
+## ------------------------------------------------
+
+clustSample = ClusteredSample(labels=cluster.labels, sample=sample)
+clust1 = get.clusters(clustSample)[[1]]
+clust2 = get.clusters(clustSample)[[2]]
+
+## ------------------------------------------------
+## compute dissimilarity between the clusters
+## ------------------------------------------------
+
+dist.cluster(clust1, clust2, dist.type='Mahalanobis')
+dist.cluster(clust1, clust2, dist.type='KL')
+dist.cluster(clust1, clust2, dist.type='Euclidean')
+
+@ 
+
+\section{Matching cell clusters across a pair of samples}
+Given a pair of \emph{ClusteredSample} objects we match clusters by using the MEC algorithm \cite{azad2010identifying}.
+MEC algorithm allows a cluster to get matched to zero, one or more than one clusters from another sample.
+The penalty for leaving a cluster unmatched is empirically selected, see\cite{azad2010identifying} for a discussion.
+When {\tt unmatch.penalty} is set to a very large value every cluster get matched.
+
+<<stage3, echo=TRUE>>=
+## ------------------------------------------------
+## load data and retrieve two samples
+## ------------------------------------------------
+
+data(hd)
+sample1 = exprs(hd.flowSet[[1]])
+sample2 = exprs(hd.flowSet[[2]])
+
+## ------------------------------------------------
+## cluster samples using kmeans algorithm
+## ------------------------------------------------
+
+clust1 = kmeans(sample1, centers=4, nstart=20)
+clust2 = kmeans(sample2, centers=4, nstart=20)
+cluster.labels1 = clust1$cluster
+cluster.labels2 = clust2$cluster
+
+## ------------------------------------------------
+## Create ClusteredSample objects  
+## ------------------------------------------------
+
+clustSample1 = ClusteredSample(labels=cluster.labels1, sample=sample1)
+clustSample2 = ClusteredSample(labels=cluster.labels2, sample=sample2)
+
+## ------------------------------------------------
+## Computing matching of clusteres  
+## An object of class "ClusterMatch" is returned 
+## ------------------------------------------------
+
+mec = match.clusters(clustSample1, clustSample2, dist.type="Mahalanobis", unmatch.penalty=99999)
+class(mec)
+summary(mec)
+@
+
+\section{Computing template from a collection of samples}
+We now build a template by merging corresponding clusters from different samples of a class.
+A template is constructed by repeatedly matching clusters across a pair of samples and merging the matched clusters into meta-cluster.
+The algorithm is similar in spirit to the UPGMA algorithm from phylogenetics and the hierarchy of the samples can be visualized by a dendrogram.  
+Note that, the samples in the attached dataset are from four subjects each of them is replicated five times.
+The template tree preserves this structure by maintaining four well separated branches.
+
+
+<<stage4, echo=TRUE>>=
+## load data (20 samples in total)
+## ------------------------------------------------
+
+data(hd)
+
+## ------------------------------------------------
+## Retrieve each sample, clsuter it and store the
+## clustered samples in a list
+## ------------------------------------------------
+set.seed(1234) # for reproducable clustering 
+cat('Clustering samples: ')
+clustSamples = list()
+for(i in 1:length(hd.flowSet))
+{
+  cat(i, ' ')
+  sample1 = exprs(hd.flowSet[[i]])
+  clust1 = kmeans(sample1, centers=4, nstart=20)
+  cluster.labels1 = clust1$cluster
+  clustSample1 = ClusteredSample(labels=cluster.labels1, sample=sample1)
+  clustSamples = c(clustSamples, clustSample1)
+}
+
+## ------------------------------------------------
+## Create a template from the list of clustered samples
+## the function returns an object of class "Template"
+## ------------------------------------------------
+
+template = create.template(clustSamples)
+summary(template)
+@ 
+\newpage
+\subsection{Plotting templates}
+All samples within a template are organized as binary tree. We can plot the hierarchy of samples established while creating a template-tree:
+Note that, the samples in the attached dataset are from four subjects each of them is replicated five times.
+The template tree preserves this structure by maintaining four well separated branches.
+
+<<template-tree, echo=TRUE, fig=TRUE>>=
+template.tree(template)
+@
+\newpage
+We plot a template as a collection of bivariate contour plots of its meta-clusters. 
+To plot each meta-cluster we consider the clusters within the meta-cluster normally distributed and represent each cluster with an ellipsoid. 
+The axes of an ellipsoid is estimated from the eigen values and eigen vectors of the covariance matrix of a cluster \cite{johnson2002applied}.
+We then plot the bivariate projection of the ellipsoid as 2-D ellipses.
+There are several options to draw a template.
+
+Option-1 (default): plot contours of each cluster of the meta-clusters
+<<template-default, echo=TRUE, fig=TRUE>>=
+plot(template)
+@
+\newpage
+Option-2: plot contours of each cluster of the meta-clusters with defined color
+<<template-color-mc, echo=TRUE, fig=TRUE>>=
+plot(template, color.mc=c('blue','black','green3','red'))
+@
+\newpage
+Option-3: plot contours of the meta-clusters with defined color
+<<template-mc, echo=TRUE, fig=TRUE>>=
+plot(template, plot.mc=TRUE, color.mc=c('blue','black','green3','red'))
+@
+\newpage
+Option-4: plot contours of each cluster of the meta-clusters with different colors for different samples
+<<template-color-sample, echo=TRUE, fig=TRUE>>=
+plot(template, colorbysample=TRUE)
+@
+
+\newpage
+\subsection{Retrieving and plotting a meta-cluster from a template}
+Similar to template, we plot a meta-cluster as a contour plot of the distribution of the underlying clusters or the combined meta-cluster. We consider cells in clusters or in the meta-cluster are normally distributed and represent the distribution with ellipsoid. 
+The axes of an ellipsoid is estimated from the eigen values and eigen vectors of the covariance matrix. 
+We then plot the bi-variate projection of the ellipsoid as 2-D ellipses. 
+
+<<mc-plot, echo=TRUE, fig=TRUE>>=
+# retrieve a metacluster from a template
+mc = get.metaClusters(template)[[1]]
+summary(mc)
+# plot all participating cluster in this meta-cluster
+plot(mc) 
+
+@
+\newpage
+We can plot the outline of the combined  meta-cluster as well.
+<<mc-plot1, echo=TRUE, fig=TRUE>>=
+plot(mc, plot.mc=TRUE)
+@
+
+\bibliographystyle{plain}
+\bibliography{flowMatch}
+
+\end{document}
