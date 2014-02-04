@@ -1,7 +1,7 @@
 Package: flowMatch
 Type: Package
 Title: Matching and meta-clustering in flow cytometry
-Version: 0.99.1
+Version: 0.99.2
 Date: 2013-08-01
 Author: Ariful Azad
 Maintainer: Ariful Azad <aazad@purdue.edu>
