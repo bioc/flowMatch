@@ -69,9 +69,8 @@ Rcpp::List computeMEC(Rcpp::NumericMatrix dist, double lambda)
 
 
 RCPP_MODULE(flowMatch_module){
-	using namespace Rcpp ;
 
-	function( "computeMEC" , &computeMEC  , "Match clusters across a pair of sample by mixed edge cover algorithm." ) ;
+    Rcpp::function( "computeMEC" , &computeMEC  , "Match clusters across a pair of sample by mixed edge cover algorithm." ) ;
 }
 
 
