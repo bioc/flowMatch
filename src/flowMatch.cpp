@@ -1,8 +1,7 @@
 #include <Rcpp.h>
 #include <string>
 #include "BipartiteGraph.h"
-using namespace std;
-using namespace Rcpp;
+
 
 // store the results from a mixed edge cover
 struct mixedEdgeCover
@@ -21,7 +20,7 @@ Rcpp::List computeMEC(Rcpp::NumericMatrix dist, double lambda)
   int nrow = dist.nrow();
 	int ncol = dist.ncol();
 	// create a 2D vector to store a distance matrix
-	vector<vector<double> >  distVecVec;
+    std::vector<std::vector<double> >  distVecVec;
 	distVecVec.resize(nrow);
 	for(int m=0; m<nrow; m++)
 	{

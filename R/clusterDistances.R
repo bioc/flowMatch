@@ -13,7 +13,15 @@ mahalanobis.dist = function(mean1, mean2, cov1, cov2, n1, n2)
   if( nrow(cov1) != nrow(cov2) || ncol(cov1) != ncol(cov2) )
     stop("funtion mahalanobis.dist(): dimensions of the covariances do not match\n")
   sigmaCombined = ( cov1*(n1-1) + cov2*(n2-1) ) / (n1+n2-2);
-  mdist = sqrt(t(mean1-mean2) %*%  solve(sigmaCombined) %*% (mean1-mean2));
+  
+  invSigmaCombined <- tryCatch({
+      solve(sigmaCombined)
+  }, error = function(err) {
+      print("The covariance matrix is singular. Using Euclidean distance instead of Mahalanobis distance")
+      return(diag(nrow(sigmaCombined)))
+  })
+  
+  mdist = sqrt(t(mean1-mean2) %*%  invSigmaCombined %*% (mean1-mean2));
   mdist = as.numeric (mdist)
   if(mdist<0)
     mdist = 0
@@ -40,6 +48,7 @@ symmetric.KL = function(mean1, mean2, cov1, cov2)
   #KL2 = .5* ( log(det(sigma1) / det (sigma2)) + sum(diag( solve(sigma1) %*% sigma2)) + t(mu1 - mu2) %*% solve(sigma1) %*% (mu1 - mu2) - length(mu2) );
   # KL = (KL1+KL2) /2  
   #definition 2, direct calculation
+
   KL = .25 * ( t(mean2 - mean1) %*% (solve(cov1) + solve(cov2)) %*% (mean2 - mean1) +
                  sum(diag( ( solve(cov2) %*% cov1) + (solve(cov1) %*% cov2) )) - 2*length(mean1) )
   KL = as.numeric(KL)   
