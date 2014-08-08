@@ -55,13 +55,15 @@ ClusteredSample = function(labels, centers=list(), covs=list(), sample=NULL, sam
     sample.size = length(labels)
     clusters=list()
     
-    # first check if we need to estimate the mean or covarianc 
-    if(length(centers)==0 || length(covs) ==0)
+    if(length(centers) != length(covs) )
+    {
+        stop("Number of centers and number of covariance matrices are not same!\n")
+    }
+    else if(length(centers)==0 || length(covs) ==0)
     {
       if(is.null(sample))
       {
-          stop("Please provide the sample in the argument when centers of the cluster are not provided
-             so that the centers can be calculated from data\n")
+          stop("Please provide the sample in the argument when centers of the cluster are not provided so that the centers can be calculated from data\n")
       }
       if(is(sample,"flowFrame"))
       {
@@ -69,27 +71,32 @@ ClusteredSample = function(labels, centers=list(), covs=list(), sample=NULL, sam
       }
       else if(!is(sample,"matrix") && !is(sample,"data.frame"))
       {
-        stop(paste("Object ", as.character(sample)," is not of class flowFrame, matrix or data.frame"))
+        stop(paste("\"sample\" is not an object of class: flowFrame, matrix or data.frame\n"))
       }
       sample = as.matrix(sample)
     }
-    else if(length(centers) != length(covs) )
-    {
-      stop("Number of centers and number of covariance matrices are not same!\n")
-    }
+    
     
     for(i in 1:num.clusters)
     {
       cluster.idx = which(labels==i)
+      
       if(length(centers) == 0)
-        cluster.center = colMeans(as.matrix(sample[cluster.idx,]))
+      {
+          selected.rows = matrix(sample[cluster.idx,], nrow=length(cluster.idx))
+          cluster.center = colMeans(selected.rows)
+      }
       else
         cluster.center = centers[[i]]
       if(length(covs) == 0)
-        cluster.cov = cov(as.matrix(sample[cluster.idx,]))
+      {
+          selected.rows = matrix(sample[cluster.idx,], nrow=length(cluster.idx))
+          cluster.cov = cov(selected.rows)
+      }
       else
         cluster.cov = covs[[i]]
-        
+    
+      cluster.cov[is.na(cluster.cov)] = 0
       cluster.size = length(cluster.idx)
       clusters[[i]] = Cluster(size=cluster.size, center=cluster.center, cov=cluster.cov, cluster.id = i, sample.id = sample.id)
     }

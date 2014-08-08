@@ -286,8 +286,8 @@ bool BipartiteGraph::RemoveDummyVtx(
 	}
 
 	// remove the dummy vtx from cover vector
-	sCoverVecVec.erase(sCoverVecVec.end());
-	tCoverVecVec.erase(tCoverVecVec.end());
+    sCoverVecVec.erase(sCoverVecVec.begin() + sNumVertices - 1 );
+	tCoverVecVec.erase(tCoverVecVec.begin() + tNumVertices - 1);
 	//printEdgCover(sCoverVecVec,tCoverVecVec);
 	return true;
 }
