@@ -22,17 +22,17 @@ setClass("ClusteredSample",
              stop ("num.clusters is not same as the length of list 'clusters' \n")
            }
            
-           sample.size = 0
+           #sample.size = 0
            for(i in 1:length(object@clusters))
            {
-             sample.size = sample.size + get.size(object@clusters[[i]])
+             #sample.size = sample.size + get.size(object@clusters[[i]])
              if(length(get.center(object@clusters[[i]])) != object@dimension)
               stop("dimension of a cluster does not match the dimension of the sample")
            }
-           if(sample.size != object@size)
-           {
-             stop("Sample size is not equal to the summation of all cluster size!\n")
-           }
+           #if(sample.size != object@size)
+           #{
+           # stop("Sample size is not equal to the summation of all cluster size!\n")
+           #}
            
            return(TRUE)
          } 
@@ -76,6 +76,10 @@ ClusteredSample = function(labels, centers=list(), covs=list(), sample=NULL, sam
       sample = as.matrix(sample)
     }
     
+    if( (is.null(sample)==FALSE) && (length(labels) != nrow(sample)) )
+    {
+      stop("Length of \"labels\" is not the same as the number of points in the sample.\n")
+    }
     
     for(i in 1:num.clusters)
     {

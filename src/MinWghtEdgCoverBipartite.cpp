@@ -323,7 +323,7 @@ void update_height(mclust& tree, vector<vector<struct templatePair> > tPairs, ve
 classTemplate getTemplate(vector<vector<BipartiteGraph> > & bGraphs, mclust& tree, int consistency, double lambda, double beta)
 {
 	//BipartiteGraph::Weight lambda = 3.0;
-	double avgSample2TemplateCost;
+	//double avgSample2TemplateCost;
 	int numSample = bGraphs.size();
 	classTemplate rootTemplate;
 
