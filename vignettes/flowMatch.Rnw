@@ -148,8 +148,9 @@ The \Rpackage{healthyFlowData} package can be downloaded in the usual way.
 
 <<CompanionPkg, eval=FALSE>>=
 
-source("http://www.bioconductor.org/biocLite.R")
-biocLite("healthyFlowData")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("healthyFlowData")
 @
 
 To use the examples included in this package, we must load the \Rpackage{flowMatch} and \Rpackage{healthyFlowData} packages:
