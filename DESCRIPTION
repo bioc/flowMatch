@@ -1,7 +1,7 @@
 Package: flowMatch
 Type: Package
 Title: Matching and meta-clustering in flow cytometry
-Version: 1.18.0
+Version: 1.18.1
 Date: 2015-03-26
 Author: Ariful Azad
 Maintainer: Ariful Azad <azad@lbl.gov>
@@ -14,4 +14,4 @@ LinkingTo: Rcpp
 Imports: Biobase
 Suggests: healthyFlowData
 RcppModules: flowMatch_module
-biocViews: Clustering, FlowCytometry
+biocViews: ImmunoOncology, Clustering, FlowCytometry
